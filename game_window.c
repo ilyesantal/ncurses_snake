@@ -27,15 +27,23 @@ void move_part(struct snake_part *part, enum direction d);
 void move_snake(struct snake_part *head, enum direction d);
 void free_snake(struct snake_part *head);
 void grow_snake(struct snake_part *head);
-void eat_apple(struct snake_part *head, struct apple *a);
-int check_walls(struct snake_part *head);
+void eat_apple(struct snake_part head, struct apple *a);
+int check_walls(struct snake_part head);
+int check_snake(struct snake_part head, int x, int y);
+int check_snake_apple(struct snake_part head, struct apple a);
+int check_snake_self(struct snake_part head);
+void print_game_over();
 
 void run_game() {
   WINDOW *game_window;
   int c;
   enum direction d = UP;
-  struct apple a = new_apple();
   struct snake_part *head = init_snake(init_snake_length);
+  struct apple a = new_apple();
+  while (!check_snake_apple(*head, a)) {
+    a = new_apple();
+  }
+
   int startx = (TERMW - game_width) / 2;
   int starty = (TERMH - game_height) / 2;
 
@@ -81,8 +89,13 @@ void run_game() {
     }
     move_snake(head, d);
     print_game(game_window, head, a);
-    eat_apple(head, &a);
-    if (!check_walls(head)) {
+    eat_apple(*head, &a);
+    if (!check_walls(*head)) {
+      print_game_over();
+      break;
+    }
+    if (!check_snake_self(*head)) {
+      print_game_over();
       break;
     }
   }
@@ -100,26 +113,16 @@ struct apple new_apple() {
   return a;
 }
 
-void eat_apple(struct snake_part *head, struct apple *a) {
-  if (head->x == a->x && head->y == a->y) {
-    grow_snake(head);
+void eat_apple(struct snake_part head, struct apple *a) {
+  if (head.x == a->x && head.y == a->y) {
+    grow_snake(&head);
     *a = new_apple();
   }
 }
 
-int check_walls(struct snake_part *head) {
-  if (head->x == 0 || head->x == game_width - 1 || head->y == 0 ||
-      head->y == game_height - 1) {
-    int startx = (TERMW - 13) / 2;
-    int starty = (TERMH - 5) / 2;
-    WINDOW *gameover = newwin(5, 13, starty, startx);
-    keypad(gameover, true);
-    refresh();
-    wclear(gameover);
-    box(gameover, 0, 0);
-    mvwprintw(gameover, 2, 2, "GAME OVER");
-    wrefresh(gameover);
-    wgetch(gameover);
+int check_walls(struct snake_part head) {
+  if (head.x == 0 || head.x == game_width - 1 || head.y == 0 ||
+      head.y == game_height - 1) {
     return 0;
   }
   return 1;
@@ -207,4 +210,36 @@ void grow_snake(struct snake_part *head) {
   p->y = 0;
   head->next = p;
   p->next = NULL;
+}
+
+int check_snake(struct snake_part head, int x, int y) {
+  struct snake_part *ptr = &head;
+  do {
+    if (ptr->x == x && ptr->y == y) {
+      return 0;
+    }
+    ptr = ptr->next;
+  } while (ptr != NULL);
+  return 1;
+}
+
+int check_snake_self(struct snake_part head) {
+  return check_snake(*head.next, head.x, head.y);
+}
+
+int check_snake_apple(struct snake_part head, struct apple a) {
+  return check_snake(head, a.x, a.y);
+}
+
+void print_game_over() {
+  int startx = (TERMW - 13) / 2;
+  int starty = (TERMH - 5) / 2;
+  WINDOW *gameover = newwin(5, 13, starty, startx);
+  keypad(gameover, true);
+  refresh();
+  wclear(gameover);
+  box(gameover, 0, 0);
+  mvwprintw(gameover, 2, 2, "GAME OVER");
+  wrefresh(gameover);
+  wgetch(gameover);
 }
