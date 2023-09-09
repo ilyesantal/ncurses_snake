@@ -11,6 +11,7 @@ char snake_head_ch = '+';
 char apple_ch = '@';
 int game_width = 30;
 int game_height = 20;
+int game_interval_msec = 500;
 
 int main() {
   srand(time(0));

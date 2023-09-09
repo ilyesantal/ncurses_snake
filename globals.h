@@ -4,3 +4,4 @@ extern char snake_body_ch;
 extern char apple_ch;
 extern int game_width;
 extern int game_height;
+extern int game_interval_msec;

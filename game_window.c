@@ -2,7 +2,9 @@
 #include "globals.h"
 #include <curses.h>
 #include <ncurses.h>
+#include <pthread.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define TERMW 80
 #define TERMH 24
@@ -33,11 +35,14 @@ int check_snake(struct snake_part head, int x, int y);
 int check_snake_apple(struct snake_part head, struct apple a);
 int check_snake_self(struct snake_part head);
 void print_game_over();
+void *get_direction();
+
+static enum direction d = UP;
+static WINDOW *game_window;
+static char exit_flag = 0;
+static int points = 0;
 
 void run_game() {
-  WINDOW *game_window;
-  int c;
-  enum direction d = UP;
   struct snake_part *head = init_snake(init_snake_length);
   struct apple a = new_apple();
   while (!check_snake_apple(*head, a)) {
@@ -59,6 +64,32 @@ void run_game() {
   refresh();
   print_game(game_window, head, a);
 
+  pthread_t id;
+  pthread_create(&id, NULL, get_direction, NULL);
+
+  while (1) {
+    usleep(game_interval_msec * 1000);
+    if (exit_flag) {
+      break;
+    }
+    move_snake(head, d);
+    print_game(game_window, head, a);
+    eat_apple(*head, &a);
+    if (!check_walls(*head)) {
+      print_game_over();
+      break;
+    }
+    if (!check_snake_self(*head)) {
+      print_game_over();
+      break;
+    }
+  }
+  curs_set(1);
+  free_snake(head);
+}
+
+void *get_direction() {
+  int c;
   while (1) {
     c = wgetch(game_window);
     switch (c) {
@@ -83,25 +114,13 @@ void run_game() {
       d = RIGHT;
       break;
     case 'x':
-      goto end;
+      exit_flag = 1;
+      pthread_exit(NULL);
+      break;
     default:
       break;
     }
-    move_snake(head, d);
-    print_game(game_window, head, a);
-    eat_apple(*head, &a);
-    if (!check_walls(*head)) {
-      print_game_over();
-      break;
-    }
-    if (!check_snake_self(*head)) {
-      print_game_over();
-      break;
-    }
   }
-end:
-  curs_set(1);
-  free_snake(head);
 }
 
 struct apple new_apple() {
@@ -116,6 +135,7 @@ struct apple new_apple() {
 void eat_apple(struct snake_part head, struct apple *a) {
   if (head.x == a->x && head.y == a->y) {
     grow_snake(&head);
+    points++;
     *a = new_apple();
   }
 }
