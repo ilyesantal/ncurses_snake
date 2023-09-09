@@ -1,4 +1,5 @@
 #include "about_menu.h"
+#include "SnakeConfig.h"
 #include <curses.h>
 
 #define WIDTH 30
@@ -23,7 +24,8 @@ void print_about() {
   about_win = newwin(HEIGHT, WIDTH, starty, startx);
   keypad(about_win, true);
 
-  mvwprintw(about_win, 0, 0, "Snake made by Anti");
+  mvwprintw(about_win, 0, 0, "Snake made by Anti\nVersion %d.%d",
+            Snake_VERSION_MAJOR, Snake_VERSION_MINOR);
   refresh();
 
   c = wgetch(about_win);

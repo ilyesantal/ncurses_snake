@@ -26,6 +26,7 @@ int main() {
       main_choice = DEFAULT;
       break;
     case CONTINUE:
+      main_choice = DEFAULT;
       break;
     case SETTINGS:
       settings_menu();
