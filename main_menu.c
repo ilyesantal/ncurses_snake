@@ -1,4 +1,5 @@
 #include "main_menu.h"
+#include <ncurses.h>
 #define WIDTH 30
 #define HEIGHT 10
 
@@ -22,6 +23,7 @@ enum main_menu_choice run_main_menu() {
   clear();
   noecho();
   cbreak(); /* Line buffering disabled. pass on everything */
+  curs_set(0);
   startx = (80 - WIDTH) / 2;
   starty = (24 - HEIGHT) / 2;
 
@@ -65,6 +67,7 @@ enum main_menu_choice run_main_menu() {
            choices[choice - 1]);
   clrtoeol();
   refresh();
+  curs_set(1);
   endwin();
 
   return choice;

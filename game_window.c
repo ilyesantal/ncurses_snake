@@ -4,6 +4,9 @@
 #include <ncurses.h>
 #include <stdlib.h>
 
+#define TERMW 80
+#define TERMH 24
+
 enum direction { UP, DOWN, LEFT, RIGHT };
 
 struct snake_part {
@@ -24,6 +27,8 @@ void move_part(struct snake_part *part, enum direction d);
 void move_snake(struct snake_part *head, enum direction d);
 void free_snake(struct snake_part *head);
 void grow_snake(struct snake_part *head);
+void eat_apple(struct snake_part *head, struct apple *a);
+int check_walls(struct snake_part *head);
 
 void run_game() {
   WINDOW *game_window;
@@ -31,6 +36,8 @@ void run_game() {
   enum direction d = UP;
   struct apple a = new_apple();
   struct snake_part *head = init_snake(init_snake_length);
+  int startx = (TERMW - game_width) / 2;
+  int starty = (TERMH - game_height) / 2;
 
   initscr();
   clear();
@@ -38,7 +45,7 @@ void run_game() {
   cbreak();
   curs_set(0);
 
-  game_window = newwin(game_height, game_width, 0, 0);
+  game_window = newwin(game_height, game_width, starty, startx);
   keypad(game_window, true);
 
   refresh();
@@ -74,9 +81,9 @@ void run_game() {
     }
     move_snake(head, d);
     print_game(game_window, head, a);
-    if (head->x == a.x && head->y == a.y) {
-      grow_snake(head);
-      a = new_apple();
+    eat_apple(head, &a);
+    if (!check_walls(head)) {
+      break;
     }
   }
 end:
@@ -91,6 +98,31 @@ struct apple new_apple() {
   a.y = (rand() % (game_height - 2)) + 1;
 
   return a;
+}
+
+void eat_apple(struct snake_part *head, struct apple *a) {
+  if (head->x == a->x && head->y == a->y) {
+    grow_snake(head);
+    *a = new_apple();
+  }
+}
+
+int check_walls(struct snake_part *head) {
+  if (head->x == 0 || head->x == game_width - 1 || head->y == 0 ||
+      head->y == game_height - 1) {
+    int startx = (TERMW - 13) / 2;
+    int starty = (TERMH - 5) / 2;
+    WINDOW *gameover = newwin(5, 13, starty, startx);
+    keypad(gameover, true);
+    refresh();
+    wclear(gameover);
+    box(gameover, 0, 0);
+    mvwprintw(gameover, 2, 2, "GAME OVER");
+    wrefresh(gameover);
+    wgetch(gameover);
+    return 0;
+  }
+  return 1;
 }
 
 struct snake_part *init_snake(int length) {
