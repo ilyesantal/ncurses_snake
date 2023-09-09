@@ -8,6 +8,9 @@
 int init_snake_length = 5;
 char snake_body_ch = '.';
 char snake_head_ch = '+';
+char apple_ch = '@';
+int game_width = 30;
+int game_height = 20;
 
 int main() {
   srand(time(0));
