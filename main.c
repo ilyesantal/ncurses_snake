@@ -12,6 +12,7 @@ char apple_ch = '@';
 int game_width = 30;
 int game_height = 20;
 int game_interval_msec = 500;
+int turbo_interval_msec = 100;
 
 int main() {
   srand(time(0));

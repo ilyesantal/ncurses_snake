@@ -24,7 +24,7 @@ struct apple {
 
 struct snake_part *init_snake(int length);
 struct apple new_apple();
-void print_game(WINDOW *game_window, struct snake_part *head, struct apple a);
+void print_game(struct snake_part *head, struct apple a);
 void move_part(struct snake_part *part, enum direction d);
 void move_snake(struct snake_part *head, enum direction d);
 void free_snake(struct snake_part *head);
@@ -37,12 +37,17 @@ int check_snake_self(struct snake_part head);
 void print_game_over();
 void *get_direction();
 
-static enum direction d = UP;
+static enum direction d;
 static WINDOW *game_window;
-static char exit_flag = 0;
-static int points = 0;
+static char exit_flag;
+static char turbo_flag;
+static int points;
 
 void run_game() {
+  d = UP;
+  exit_flag = 0;
+  points = 0;
+  turbo_flag = 0;
   struct snake_part *head = init_snake(init_snake_length);
   struct apple a = new_apple();
   while (!check_snake_apple(*head, a)) {
@@ -62,18 +67,19 @@ void run_game() {
   keypad(game_window, true);
 
   refresh();
-  print_game(game_window, head, a);
+  print_game(head, a);
 
   pthread_t id;
   pthread_create(&id, NULL, get_direction, NULL);
 
   while (1) {
-    usleep(game_interval_msec * 1000);
     if (exit_flag) {
       break;
     }
+    usleep(turbo_flag ? (turbo_interval_msec * 1000)
+                      : (game_interval_msec * 1000));
     move_snake(head, d);
-    print_game(game_window, head, a);
+    print_game(head, a);
     eat_apple(*head, &a);
     if (!check_walls(*head)) {
       print_game_over();
@@ -94,24 +100,31 @@ void *get_direction() {
     c = wgetch(game_window);
     switch (c) {
     case KEY_UP:
+      turbo_flag = 0;
       if (d == DOWN)
         break;
       d = UP;
       break;
     case KEY_DOWN:
+      turbo_flag = 0;
       if (d == UP)
         break;
       d = DOWN;
       break;
     case KEY_LEFT:
+      turbo_flag = 0;
       if (d == RIGHT)
         break;
       d = LEFT;
       break;
     case KEY_RIGHT:
+      turbo_flag = 0;
       if (d == LEFT)
         break;
       d = RIGHT;
+      break;
+    case ' ':
+      turbo_flag = 1;
       break;
     case 'x':
       exit_flag = 1;
@@ -166,7 +179,7 @@ struct snake_part *init_snake(int length) {
   return head;
 }
 
-void print_game(WINDOW *game_window, struct snake_part *head, struct apple a) {
+void print_game(struct snake_part *head, struct apple a) {
   wclear(game_window);
   box(game_window, 0, 0);
   mvwprintw(game_window, a.y, a.x, "%c", apple_ch);

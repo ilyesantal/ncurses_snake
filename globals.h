@@ -5,3 +5,4 @@ extern char apple_ch;
 extern int game_width;
 extern int game_height;
 extern int game_interval_msec;
+extern int turbo_interval_msec;
