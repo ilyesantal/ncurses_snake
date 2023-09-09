@@ -2,6 +2,7 @@
 #include "game_window.h"
 #include "globals.h"
 #include "main_menu.h"
+#include "settings_menu.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -9,8 +10,8 @@ int init_snake_length = 5;
 char snake_body_ch = '.';
 char snake_head_ch = '+';
 char apple_ch = '@';
-int game_width = 30;
-int game_height = 20;
+int game_width = 10;
+int game_height = 10;
 int game_interval_msec = 500;
 int turbo_interval_msec = 100;
 
@@ -26,7 +27,9 @@ int main() {
       break;
     case CONTINUE:
       break;
-    case OPTIONS:
+    case SETTINGS:
+      settings_menu();
+      main_choice = DEFAULT;
       break;
     case ABOUT:
       print_about();

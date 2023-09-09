@@ -4,7 +4,7 @@
 #define HEIGHT 10
 
 char *choices[] = {
-    "Continue", "New Game", "Options", "About", "Exit",
+    "New Game", "Continue", "Settings", "About", "Exit",
 };
 
 int n_choices = sizeof(choices) / sizeof(char *);

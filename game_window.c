@@ -25,6 +25,7 @@ struct apple {
 struct snake_part *init_snake(int length);
 struct apple new_apple();
 void print_game(struct snake_part *head, struct apple a);
+void print_info();
 void move_part(struct snake_part *part, enum direction d);
 void move_snake(struct snake_part *head, enum direction d);
 void free_snake(struct snake_part *head);
@@ -39,11 +40,14 @@ void *get_direction();
 
 static enum direction d;
 static WINDOW *game_window;
+static WINDOW *info_window;
 static char exit_flag;
 static char turbo_flag;
 static int points;
+static int goal;
 
 void run_game() {
+  goal = (game_width - 2) * (game_height - 2) - init_snake_length;
   d = UP;
   exit_flag = 0;
   points = 0;
@@ -66,7 +70,9 @@ void run_game() {
   game_window = newwin(game_height, game_width, starty, startx);
   keypad(game_window, true);
 
-  refresh();
+  info_window = newwin(2, game_width, 0, startx);
+
+  print_info();
   print_game(head, a);
 
   pthread_t id;
@@ -80,13 +86,16 @@ void run_game() {
                       : (game_interval_msec * 1000));
     move_snake(head, d);
     print_game(head, a);
+    print_info();
     eat_apple(*head, &a);
     if (!check_walls(*head)) {
       print_game_over();
+      exit_flag = 1;
       break;
     }
     if (!check_snake_self(*head)) {
       print_game_over();
+      exit_flag = 1;
       break;
     }
   }
@@ -97,6 +106,9 @@ void run_game() {
 void *get_direction() {
   int c;
   while (1) {
+    if (exit_flag) {
+      break;
+    }
     c = wgetch(game_window);
     switch (c) {
     case KEY_UP:
@@ -134,6 +146,7 @@ void *get_direction() {
       break;
     }
   }
+  return NULL;
 }
 
 struct apple new_apple() {
@@ -150,6 +163,9 @@ void eat_apple(struct snake_part head, struct apple *a) {
     grow_snake(&head);
     points++;
     *a = new_apple();
+    if (points == goal) {
+      print_game_over();
+    }
   }
 }
 
@@ -180,6 +196,7 @@ struct snake_part *init_snake(int length) {
 }
 
 void print_game(struct snake_part *head, struct apple a) {
+  refresh();
   wclear(game_window);
   box(game_window, 0, 0);
   mvwprintw(game_window, a.y, a.x, "%c", apple_ch);
@@ -189,6 +206,15 @@ void print_game(struct snake_part *head, struct apple a) {
     mvwprintw(game_window, current->y, current->x, "%c", snake_body_ch);
   }
   wrefresh(game_window);
+}
+
+void print_info() {
+  refresh();
+  wclear(info_window);
+  mvwprintw(info_window, 1, 1, "Points: %d", points);
+  mvwprintw(info_window, 1, game_width - 16, "Interval: %dms",
+            turbo_flag ? turbo_interval_msec : game_interval_msec);
+  wrefresh(info_window);
 }
 
 void move_part(struct snake_part *part, enum direction d) {
